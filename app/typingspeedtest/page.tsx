@@ -3,7 +3,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type TDifficulty = "easy" | "medium" | "hard";
 type TMode = "timed" | "passage";
@@ -21,6 +21,7 @@ export default function Page() {
 	);
 
 	const [started, setStarted] = useState(false);
+	const [running, setRunning] = useState(false);
 
 	const [currentIndex, setIndex] = useState(0);
 	const [wordIndex, setWordIndex] = useState(0);
@@ -35,11 +36,24 @@ export default function Page() {
 	const [stats, setStats] = useState({
 		wpm: 0,
 		accuracy: 0,
+		rawWpm: 0,
 	});
 
+	const [timeLeft, setTimeLeft] = useState(0);
+	const [displayTime, setDisplayTime] = useState({ minute: 0, seconds: 0 });
+
+	const startTime = useRef<number | null>(null);
+	const correctChars = useRef<number>(0);
+	const keyStrokes = useRef(0);
+	const computedTimeLeft = useRef(0);
 	let tracker = 0;
 
-	const handleStart = () => setStarted(true);
+	// let tracker = 0;
+
+	const handleStart = () => {
+		setStarted(true);
+		setRunning(true);
+	};
 
 	const handleRestart = useCallback(() => {
 		tracker = 0;
@@ -52,6 +66,13 @@ export default function Page() {
 				typedAnswer: [...word].map((char) => [char, undefined]),
 			})),
 		);
+		setStats({
+			wpm: 0,
+			accuracy: 0,
+			rawWpm: 0,
+		});
+		setDisplayTime({ minute: 0, seconds: 0 });
+		setRunning(true);
 	}, []);
 
 	const handleDifficulty = useCallback(
@@ -76,12 +97,15 @@ export default function Page() {
 
 	useEffect(() => {
 		const handleKey = (e: KeyboardEvent) => {
+			keyStrokes.current++;
+
 			if (e.key === " ") {
 				e.preventDefault();
 			}
 
 			if (
 				started &&
+				computedTimeLeft.current > 0 &&
 				e.key.length === 1 &&
 				!e.ctrlKey &&
 				!e.metaKey &&
@@ -106,6 +130,10 @@ export default function Page() {
 
 					temp[newWordIndex].typedAnswer[newIndex][1] = e.key;
 
+					if (e.key === temp[newWordIndex].typedAnswer[newIndex][0]) {
+						correctChars.current++;
+					}
+
 					setArrayWord(temp);
 					setIndex((prev) => prev + 1);
 				}
@@ -126,6 +154,11 @@ export default function Page() {
 						const temp = arrayWord;
 
 						newIndex = temp[newWordIndex].typedAnswer.length - 1;
+
+						const char = temp[newWordIndex].typedAnswer[newIndex][0];
+						const typedChar = temp[newWordIndex].typedAnswer[newIndex][1];
+
+						if (char === typedChar) correctChars.current--;
 
 						temp[newWordIndex].typedAnswer[newIndex][1] = undefined;
 
@@ -151,6 +184,68 @@ export default function Page() {
 		return () => document.removeEventListener("keydown", handleKey);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [currentIndex, wordIndex, started, cursorIndex]);
+
+	useEffect(() => {
+		console.log("started");
+		if (!running) return;
+		console.log("here");
+
+		if (!startTime.current) {
+			startTime.current = Date.now();
+		}
+
+		const timeIntervalValue = options.mode === "timed" ? 100 : 1000;
+		let elapsedSeconds = (Date.now() - startTime.current!) / 1000;
+		let minutes = Math.max(elapsedSeconds / 50, 0.01);
+		computedTimeLeft.current =
+			options.mode === "timed" ? Math.max(5 - elapsedSeconds, 0) : 0;
+
+		const timeInterval = setInterval(() => {
+			console.log("time runnng");
+			elapsedSeconds = (Date.now() - startTime.current!) / 1000;
+
+			if (options.mode === "timed") {
+				computedTimeLeft.current = Math.max(5 - elapsedSeconds, 0);
+
+				setDisplayTime({
+					minute: Math.floor(Math.ceil(computedTimeLeft.current) / 60),
+					seconds: Math.ceil(computedTimeLeft.current) % 60,
+				});
+			} else {
+				computedTimeLeft.current++;
+				setDisplayTime({
+					minute: Math.floor(Math.ceil(computedTimeLeft.current) / 60),
+					seconds: Math.ceil(computedTimeLeft.current) % 60,
+				});
+			}
+
+			minutes = Math.max(elapsedSeconds / 60, 0.01);
+
+			if (options.mode === "timed" && computedTimeLeft.current <= 0) {
+				startTime.current = null;
+				clearInterval(timeInterval);
+				setRunning(false);
+			}
+		}, timeIntervalValue);
+
+		const interval = setInterval(() => {
+			console.log("stats computation runnng");
+			setStats((prev) => ({
+				...prev,
+				rawWpm: Math.round(keyStrokes.current / 5 / minutes),
+				wpm: Math.round(correctChars.current / 5 / minutes),
+				accuracy:
+					keyStrokes.current > 0
+						? Math.round((correctChars.current / keyStrokes.current) * 100)
+						: 0,
+			}));
+		}, 1500);
+
+		return () => {
+			clearInterval(interval);
+			clearInterval(timeInterval);
+		};
+	}, [running, options.mode]);
 
 	return (
 		<main className="bg-[hsl(0,0%,7%)] min-h-dvh flex justify-center">
@@ -191,7 +286,7 @@ export default function Page() {
 								WPM:
 							</span>
 							<span className="text-[24px] font-bold font-sora text-[hsl(0,0%,100%)] xl:grow xl:text-[16px]">
-								40
+								{stats.wpm}
 							</span>
 						</div>
 
@@ -200,7 +295,7 @@ export default function Page() {
 								Accuracy:
 							</span>
 							<span className="text-[24px] font-bold font-sora text-[hsl(354,63%,57%)] xl:grow xl:text-[16px]">
-								94%
+								{stats.accuracy}%
 							</span>
 						</div>
 
@@ -209,7 +304,9 @@ export default function Page() {
 								Time:
 							</span>
 							<span className="text-[24px] font-bold font-sora text-[hsl(49,85%,70%)] xl:grow xl:text-[16px xl:text-[16px]">
-								02:46
+								{`${displayTime.minute.toString().padStart(2, "0")}:${displayTime.seconds
+									.toString()
+									.padStart(2, "0")}`}
 							</span>
 						</div>
 					</div>
