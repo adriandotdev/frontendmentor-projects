@@ -5,6 +5,9 @@
 import { cn } from "@/lib/utils";
 import { useCallback, useEffect, useState } from "react";
 
+type TDifficulty = "easy" | "medium" | "hard";
+type TMode = "timed" | "passage";
+
 export default function Page() {
 	const [sentence, setSentence] = useState(
 		`The early morning fog hung low over the quiet streets, softening the edges of buildings and turning lamplight into a gentle glow. Birds chirped intermittently as the first few pedestrians hurried along, their footsteps echoing softly against the wet pavement. In the distance, the river reflected the pale light of dawn, and for a moment, everything felt suspended between night and day, calm yet full of possibility.`,
@@ -22,10 +25,18 @@ export default function Page() {
 	const [currentIndex, setIndex] = useState(0);
 	const [wordIndex, setWordIndex] = useState(0);
 	const [cursorIndex, setCursorIndex] = useState(0);
-	const [options, setOptions] = useState({
+	const [options, setOptions] = useState<{
+		difficulty: TDifficulty;
+		mode: TMode;
+	}>({
 		difficulty: "easy",
 		mode: "timed",
 	});
+	const [stats, setStats] = useState({
+		wpm: 0,
+		accuracy: 0,
+	});
+
 	let tracker = 0;
 
 	const handleStart = () => setStarted(true);
@@ -42,6 +53,26 @@ export default function Page() {
 			})),
 		);
 	}, []);
+
+	const handleDifficulty = useCallback(
+		(value: TDifficulty) => {
+			setOptions({
+				...options,
+				difficulty: value,
+			});
+		},
+		[options],
+	);
+
+	const handleMode = useCallback(
+		(value: TMode) => {
+			setOptions({
+				...options,
+				mode: value,
+			});
+		},
+		[options],
+	);
 
 	useEffect(() => {
 		const handleKey = (e: KeyboardEvent) => {
@@ -88,13 +119,8 @@ export default function Page() {
 				let newIndex = currentIndex;
 				let newWordIndex = wordIndex;
 
-				console.log("INDEX BSPACE: ", newIndex);
-				console.log("WORD INDEX BSPACE: ", newWordIndex);
-
 				if (newIndex - 1 < 0) {
-					console.log("1 here");
 					if (newWordIndex - 1 >= 0) {
-						console.log("2 here");
 						newWordIndex -= 1;
 
 						const temp = arrayWord;
@@ -108,15 +134,12 @@ export default function Page() {
 						setIndex(newIndex);
 					}
 				} else {
-					console.log("3 here");
 					const temp = arrayWord;
 
 					temp[newWordIndex].typedAnswer[newIndex - 1][1] = undefined;
-					console.log("INDEX BSPACE: ", newIndex);
+
 					newIndex -= 1;
 
-					console.log("AFTER INDEX BSPACE: ", newIndex);
-					console.log(temp);
 					setIndex(newIndex);
 					setArrayWord(temp);
 				}
@@ -194,14 +217,20 @@ export default function Page() {
 					{/* Dropdowns */}
 					{/* Only shown on mobile view */}
 					<div className="flex gap-4 px-5 mt-5 xl:mt-0 xl:hidden">
-						<select className="border rounded-md border-white text-white p-1 grow basis-37.5">
-							<option>Easy</option>
-							<option>Medium</option>
-							<option>Hard</option>
+						<select
+							onChange={(e) => handleDifficulty(e.target.value as TDifficulty)}
+							className="border rounded-md border-white text-white p-1 grow basis-37.5"
+						>
+							<option value={"easy"}>Easy</option>
+							<option value={"medium"}>Medium</option>
+							<option value={"hard"}>Hard</option>
 						</select>
-						<select className="border rounded-md border-white text-white p-1 grow basis-37.5">
-							<option>Timed (60s)</option>
-							<option>Passage</option>
+						<select
+							onChange={(e) => handleMode(e.target.value as TMode)}
+							className="border rounded-md border-white text-white p-1 grow basis-37.5"
+						>
+							<option value={"timed"}>Timed (60s)</option>
+							<option value={"passage"}>Passage</option>
 						</select>
 					</div>
 
@@ -212,12 +241,23 @@ export default function Page() {
 								Difficulty:
 							</span>
 							<div className="gap-2 flex">
-								{["Easy", "Medium", "Hard"].map((option, index) => (
+								{[
+									{ label: "Easy", value: "easy" },
+									{ label: "Medium", value: "medium" },
+									{ label: "Hard", value: "hard" },
+								].map((option, index) => (
 									<button
+										onClick={() =>
+											handleDifficulty(option.value as TDifficulty)
+										}
 										key={index}
-										className="border text-white p-1 px-2 font-sora text-[12px] rounded-md border-[hsl(240,3%,46%)]"
+										className={cn(
+											"border text-white p-1 px-2 font-sora text-[12px] rounded-md border-[hsl(240,3%,46%)]",
+											option.value === options.difficulty &&
+												"text-[hsl(210,100%,65%)] border border-[hsl(210,100%,65%)]",
+										)}
 									>
-										{option}
+										{option.label}
 									</button>
 								))}
 							</div>
@@ -229,12 +269,20 @@ export default function Page() {
 								Difficulty:
 							</span>
 							<div className="gap-2 flex">
-								{["Timed (60s)", "Passage"].map((option, index) => (
+								{[
+									{ label: "Timed (60s)", value: "timed" },
+									{ label: "Passage", value: "passage" },
+								].map((option, index) => (
 									<button
+										onClick={() => handleMode(option.value as TMode)}
 										key={index}
-										className="border text-white p-1 px-2 font-sora text-[12px] rounded-md border-[hsl(240,3%,46%)]"
+										className={cn(
+											"border text-white p-1 px-2 font-sora text-[12px] rounded-md border-[hsl(240,3%,46%)]",
+											option.value === options.mode &&
+												"text-[hsl(210,100%,65%)] border border-[hsl(210,100%,65%)]",
+										)}
 									>
-										{option}
+										{option.label}
 									</button>
 								))}
 							</div>
