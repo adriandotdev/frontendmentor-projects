@@ -3,7 +3,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export default function Page() {
 	const [sentence, setSentence] = useState(
@@ -22,11 +22,15 @@ export default function Page() {
 	const [currentIndex, setIndex] = useState(0);
 	const [wordIndex, setWordIndex] = useState(0);
 	const [cursorIndex, setCursorIndex] = useState(0);
+	const [options, setOptions] = useState({
+		difficulty: "easy",
+		mode: "timed",
+	});
 	let tracker = 0;
 
 	const handleStart = () => setStarted(true);
 
-	const handleRestart = () => {
+	const handleRestart = useCallback(() => {
 		tracker = 0;
 		setIndex(0);
 		setWordIndex(0);
@@ -37,7 +41,7 @@ export default function Page() {
 				typedAnswer: [...word].map((char) => [char, undefined]),
 			})),
 		);
-	};
+	}, []);
 
 	useEffect(() => {
 		const handleKey = (e: KeyboardEvent) => {
@@ -255,33 +259,7 @@ export default function Page() {
 					)}
 					{/* Words to type */}
 					<div>
-						{/* <div className="flex whitespace-nowrap flex-wrap  text-2xl font-medium font-sora leading-[50px] xl:text-3xl">
-							{objSentence.map((item, index) => (
-								<span
-									className={cn(
-										item.character !== " " ? "" : "whitespace-pre",
-										item.characterTyped === undefined
-											? "text-[hsl(0,0%,15%)]"
-											: item.characterTyped === item.character
-												? "text-green-500"
-												: item.characterTyped !== item.character
-													? "text-red-500"
-													: "",
-										index === currentIndex &&
-											item.characterTyped === undefined &&
-											"bg-[hsl(240,1%,59%)] px-1 rounded-sm",
-										item.character === " " &&
-											item.character !== item.characterTyped &&
-											item.characterTyped !== undefined &&
-											"bg-red-500 rounded-sm h-8 my-auto",
-									)}
-									key={index}
-								>
-									{item.character}
-								</span>
-							))}
-						</div> */}
-						<div className="flex flex-wrap  text-2xl font-medium font-sora leading-12.5 xl:text-3xl xl:leading-15">
+						<div className="flex flex-wrap  text-2xl font-medium font-sora leading-15 xl:text-3xl">
 							{sentence.split(/(\s+)/).map((word, insideWordIndex) => {
 								return (
 									<span
