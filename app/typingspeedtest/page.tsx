@@ -55,6 +55,9 @@ export default function Page() {
 	const keyStrokes = useRef(0);
 	const computedTimeLeft = useRef(0);
 	const timeInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+	const computeStatInterval = useRef<ReturnType<typeof setInterval> | null>(
+		null,
+	);
 
 	let tracker = 0;
 
@@ -138,6 +141,88 @@ export default function Page() {
 		},
 		[options],
 	);
+
+	const handleShowingStats = (minutes: number) => {
+		const wpm = Math.round(correctChars.current / 5 / minutes);
+		const accuracy =
+			keyStrokes.current > 0
+				? Math.round((correctChars.current / keyStrokes.current) * 100)
+				: 0;
+
+		const savedData = localStorage.getItem("stats");
+		const data = savedData
+			? (JSON.parse(savedData) as {
+					wpm: number;
+					accuracy: number;
+					correctChars: number;
+					incorrectChars: number;
+				})
+			: null;
+
+		setShowResultStat(true);
+
+		if (!data) {
+			if (wpm > 0) {
+				console.log(
+					"still run",
+					JSON.stringify({
+						wpm,
+						accuracy,
+						correctChars: correctChars.current,
+						incorrectChars: incorrectChars.current,
+					}),
+				);
+				localStorage.setItem(
+					"stats",
+					JSON.stringify({
+						wpm,
+						accuracy,
+						correctChars: correctChars.current,
+						incorrectChars: incorrectChars.current,
+					}),
+				);
+
+				setStatsContent({
+					title: "Baseline Established!",
+					description:
+						"You've set the bar. Now the real challenge begins--time to beat it.",
+					buttonContent: "Beat This Score",
+				});
+			}
+		} else {
+			if (wpm < data.wpm) {
+				setStatsContent({
+					title: "Test Complete!",
+					description: "Solid run! Keep pushing to beat your high score.",
+					buttonContent: "Go Again",
+				});
+			} else {
+				localStorage.setItem(
+					"stats",
+					JSON.stringify({
+						wpm,
+						accuracy,
+						correctChars: correctChars.current,
+						incorrectChars: incorrectChars.current,
+					}),
+				);
+				setStatsContent({
+					title: "High Score Smashed!",
+					description: "You're getting faster. That was incredible typing.",
+					buttonContent: "Go Again",
+				});
+			}
+		}
+		setStats((prev) => ({
+			...prev,
+			rawWpm: Math.round(keyStrokes.current / 5 / minutes),
+			wpm: Math.round(correctChars.current / 5 / minutes),
+			accuracy:
+				keyStrokes.current > 0
+					? Math.round((correctChars.current / keyStrokes.current) * 100)
+					: 0,
+		}));
+	};
 
 	useEffect(() => {
 		const handleKey = (e: KeyboardEvent) => {
@@ -245,7 +330,7 @@ export default function Page() {
 		let elapsedSeconds = (Date.now() - startTime.current!) / 1000;
 		let minutes = Math.max(elapsedSeconds / 50, 0.01);
 		computedTimeLeft.current =
-			options.mode === "timed" ? Math.max(5 - elapsedSeconds, 0) : 0;
+			options.mode === "timed" ? Math.max(-elapsedSeconds, 0) : 0;
 
 		timeInterval.current = setInterval(() => {
 			console.log("time runnng");
@@ -269,71 +354,39 @@ export default function Page() {
 			minutes = Math.max(elapsedSeconds / 60, 0.01);
 
 			if (options.mode === "timed" && computedTimeLeft.current <= 0) {
-				const wpm = Math.round(correctChars.current / 5 / minutes);
-
 				startTime.current = null;
 
+				handleShowingStats(minutes);
 				if (timeInterval.current) clearInterval(timeInterval.current);
-				setRunning(false);
+				if (computeStatInterval.current)
+					clearInterval(computeStatInterval.current);
 
-				if (wpm > 0) setShowResultStat(true);
+				setRunning(false);
 			}
 		}, timeIntervalValue);
 
-		const interval = setInterval(() => {
-			console.log("stats computation runnng");
-			setStats((prev) => ({
-				...prev,
-				rawWpm: Math.round(keyStrokes.current / 5 / minutes),
-				wpm: Math.round(correctChars.current / 5 / minutes),
-				accuracy:
-					keyStrokes.current > 0
-						? Math.round((correctChars.current / keyStrokes.current) * 100)
-						: 0,
-			}));
+		computeStatInterval.current = setInterval(() => {
+			if (running) {
+				setStats((prev) => ({
+					...prev,
+					rawWpm: Math.round(keyStrokes.current / 5 / minutes),
+					wpm: Math.round(correctChars.current / 5 / minutes),
+					accuracy:
+						keyStrokes.current > 0
+							? Math.round((correctChars.current / keyStrokes.current) * 100)
+							: 0,
+				}));
+			}
 		}, 1500);
 
 		return () => {
-			clearInterval(interval);
+			if (computeStatInterval.current)
+				clearInterval(computeStatInterval.current);
 
 			if (timeInterval.current) clearInterval(timeInterval.current);
 		};
 	}, [running, options.mode]);
 
-	useEffect(() => {
-		if (!running) {
-			const savedData = localStorage.getItem("stats");
-			const data = JSON.parse(savedData as string) as {
-				wpm: number;
-				accuracy: number;
-				correctChars: number;
-				incorrectChars: number;
-			};
-
-			if (!data) {
-				console.log(stats.wpm);
-				if (stats.wpm > 0) {
-					localStorage.setItem(
-						"stats",
-						JSON.stringify({
-							wpm: stats.wpm,
-							accuracy: stats.accuracy,
-							correctChars: correctChars.current,
-							incorrectChars: incorrectChars.current,
-						}),
-					);
-				}
-
-				setStatsContent({
-					title: "Baseline Established!",
-					description:
-						"You've set the bar. Now the real challenge begins--time to beat it.",
-					buttonContent: "Beat This Score",
-				});
-			} else {
-			}
-		}
-	}, [stats.wpm]);
 	return (
 		<main className="bg-[hsl(0,0%,7%)] min-h-dvh flex justify-center font-sora">
 			<div className="max-w-300 w-full">
@@ -342,12 +395,21 @@ export default function Page() {
 
 				{showResultStat ? (
 					<div className="max-w-300 flex flex-col justify-center items-center gap-5 relative">
-						<Image
-							src={"/typingspeed/icon-completed.svg"}
-							width={50}
-							alt="check-icon"
-							height={50}
-						/>
+						{statsContent.title.includes("Smashed") ? (
+							<Image
+								src={"/typingspeed/icon-new-pb.svg"}
+								width={50}
+								alt="check-icon"
+								height={50}
+							/>
+						) : (
+							<Image
+								src={"/typingspeed/icon-completed.svg"}
+								width={50}
+								alt="check-icon"
+								height={50}
+							/>
+						)}
 
 						<div className="flex flex-col gap-2 z-10">
 							<h1 className="text-[hsl(0,0%,100%)] text-2xl font-sora font-bold text-center">
@@ -406,12 +468,23 @@ export default function Page() {
 							<img src={"/typingspeed/icon-restart.svg"} className="invert" />
 						</button>
 
-						<div className="absolute bottom-0 right-12 w-10">
-							<img src={"/typingspeed/pattern-star-1.svg"} />
-						</div>
+						{!statsContent.title.includes("Smashed") && (
+							<div className="absolute bottom-0 right-12 w-10">
+								<img src={"/typingspeed/pattern-star-1.svg"} />
+							</div>
+						)}
 
-						<div className="absolute top-10 left-5 w-10">
-							<img src={"/typingspeed/pattern-star-2.svg"} />
+						{!statsContent.title.includes("Smashed") && (
+							<div className="absolute top-10 left-5 w-10">
+								<img src={"/typingspeed/pattern-star-2.svg"} />
+							</div>
+						)}
+
+						<div className="fixed bottom-0 left-0 w-full pointer-events-none">
+							<img
+								src={"/typingspeed/pattern-confetti.svg"}
+								className="w-full"
+							/>
 						</div>
 					</div>
 				) : (
