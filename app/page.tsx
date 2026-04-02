@@ -104,6 +104,12 @@ const projects = [
 		repositoryLink: "https://github.com/adriandotdev/frontendmentor-projects",
 		imageSrc: "/projects-images/news-letter-form.png",
 	},
+	{
+		projectName: "Typing Speed Test",
+		liveSiteLink: "/typingspeedtest",
+		repositoryLink: "https://github.com/adriandotdev/frontendmentor-projects",
+		imageSrc: "/projects-images/typingspeed.png",
+	},
 ];
 export default function Home() {
 	return (

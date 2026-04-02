@@ -1,4 +1,6 @@
-export const Header = () => {
+"use client";
+
+export const Header = ({ bestWpm }: { bestWpm: number }) => {
 	return (
 		<div className="flex items-center justify-between p-4">
 			{/* Logo small */}
@@ -12,7 +14,7 @@ export const Header = () => {
 			<img
 				className="hidden xl:block"
 				src={"/typingspeed/logo-large.svg"}
-				alt="small-logo"
+				alt="large-logo"
 			/>
 
 			<div className="flex items-center gap-4">
@@ -22,7 +24,8 @@ export const Header = () => {
 					<span className="text-[hsl(240,3%,46%)] font-sora font-semibold">
 						Best:
 					</span>
-					<span className="text-[hsl(0,0%,100%)]">92 WPM</span>
+
+					<span className="text-[hsl(0,0%,100%)]">{bestWpm} WPM</span>
 				</div>
 			</div>
 		</div>

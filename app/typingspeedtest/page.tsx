@@ -4,394 +4,38 @@
 
 import { cn } from "@/lib/utils";
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
 import { Header } from "./_components/Header";
 import { TypingStats } from "./_components/TypingStats";
-
-type TDifficulty = "easy" | "medium" | "hard";
-type TMode = "timed" | "passage";
+import { TDifficulty, TMode } from "./_components/utils";
+import useTypingTest from "./_hooks/useTypingTest";
 
 export default function Page() {
-	const [sentence, setSentence] = useState(
-		`The early morning fog hung low over the quiet streets, softening the edges of buildings and turning lamplight into a gentle glow. Birds chirped intermittently as the first few pedestrians hurried along, their footsteps echoing softly against the wet pavement. In the distance, the river reflected the pale light of dawn, and for a moment, everything felt suspended between night and day, calm yet full of possibility.`,
-	);
-	const slicedSentence = sentence.split(/(\s+)/);
-	const [arrayWord, setArrayWord] = useState(
-		slicedSentence.map((word) => ({
-			word,
-			typedAnswer: [...word].map((char) => [char, undefined]),
-		})),
-	);
-
-	const [started, setStarted] = useState(false);
-	const [running, setRunning] = useState(false);
-	const [showResultStat, setShowResultStat] = useState(false);
-
-	const [currentIndex, setIndex] = useState(0);
-	const [wordIndex, setWordIndex] = useState(0);
-	const [cursorIndex, setCursorIndex] = useState(0);
-	const [options, setOptions] = useState<{
-		difficulty: TDifficulty;
-		mode: TMode;
-	}>({
-		difficulty: "easy",
-		mode: "timed",
-	});
-	const [stats, setStats] = useState({
-		wpm: 0,
-		accuracy: 0,
-		rawWpm: 0,
-	});
-	const [displayTime, setDisplayTime] = useState({ minute: 0, seconds: 0 });
-	const [statsContent, setStatsContent] = useState({
-		title: "",
-		description: "",
-		buttonContent: "",
-	});
-
-	const startTime = useRef<number | null>(null);
-	const correctChars = useRef<number>(0);
-	const incorrectChars = useRef<number>(0);
-	const keyStrokes = useRef(0);
-	const computedTimeLeft = useRef(0);
-	const timeInterval = useRef<ReturnType<typeof setInterval> | null>(null);
-	const computeStatInterval = useRef<ReturnType<typeof setInterval> | null>(
-		null,
-	);
-
-	let tracker = 0;
-
-	// let tracker = 0;
-
-	const handleStart = () => {
-		setStarted(true);
-		setRunning(true);
-	};
-
-	const handleRestart = useCallback(() => {
-		tracker = 0;
-		correctChars.current = 0;
-		incorrectChars.current = 0;
-		keyStrokes.current = 0;
-		computedTimeLeft.current = 0;
-		startTime.current = null;
-		setIndex(0);
-		setWordIndex(0);
-		setCursorIndex(0);
-		setArrayWord(
-			slicedSentence.map((word) => ({
-				word,
-				typedAnswer: [...word].map((char) => [char, undefined]),
-			})),
-		);
-		setStats({
-			wpm: 0,
-			accuracy: 0,
-			rawWpm: 0,
-		});
-		setDisplayTime({ minute: 0, seconds: 0 });
-		setRunning(false);
-		setShowResultStat(false);
-		setStarted(false);
-		if (timeInterval.current) clearInterval(timeInterval.current);
-	}, []);
-
-	const handleScoreBeat = () => {
-		tracker = 0;
-		correctChars.current = 0;
-		incorrectChars.current = 0;
-		keyStrokes.current = 0;
-		computedTimeLeft.current = 0;
-		startTime.current = null;
-		if (timeInterval.current) clearInterval(timeInterval.current);
-		setIndex(0);
-		setWordIndex(0);
-		setCursorIndex(0);
-		setStats({
-			wpm: 0,
-			accuracy: 0,
-			rawWpm: 0,
-		});
-		setArrayWord(
-			slicedSentence.map((word) => ({
-				word,
-				typedAnswer: [...word].map((char) => [char, undefined]),
-			})),
-		);
-		setShowResultStat(false);
-		setStarted(false);
-	};
-
-	const handleDifficulty = useCallback(
-		(value: TDifficulty) => {
-			setOptions({
-				...options,
-				difficulty: value,
-			});
-		},
-		[options],
-	);
-
-	const handleMode = useCallback(
-		(value: TMode) => {
-			setOptions({
-				...options,
-				mode: value,
-			});
-		},
-		[options],
-	);
-
-	const handleShowingStats = (minutes: number) => {
-		const wpm = Math.round(correctChars.current / 5 / minutes);
-		const accuracy =
-			keyStrokes.current > 0
-				? Math.round((correctChars.current / keyStrokes.current) * 100)
-				: 0;
-
-		const savedData = localStorage.getItem("stats");
-		const data = savedData
-			? (JSON.parse(savedData) as {
-					wpm: number;
-					accuracy: number;
-					correctChars: number;
-					incorrectChars: number;
-				})
-			: null;
-
-		setShowResultStat(true);
-
-		if (!data) {
-			if (wpm > 0) {
-				console.log(
-					"still run",
-					JSON.stringify({
-						wpm,
-						accuracy,
-						correctChars: correctChars.current,
-						incorrectChars: incorrectChars.current,
-					}),
-				);
-				localStorage.setItem(
-					"stats",
-					JSON.stringify({
-						wpm,
-						accuracy,
-						correctChars: correctChars.current,
-						incorrectChars: incorrectChars.current,
-					}),
-				);
-
-				setStatsContent({
-					title: "Baseline Established!",
-					description:
-						"You've set the bar. Now the real challenge begins--time to beat it.",
-					buttonContent: "Beat This Score",
-				});
-			}
-		} else {
-			if (wpm < data.wpm) {
-				setStatsContent({
-					title: "Test Complete!",
-					description: "Solid run! Keep pushing to beat your high score.",
-					buttonContent: "Go Again",
-				});
-			} else {
-				localStorage.setItem(
-					"stats",
-					JSON.stringify({
-						wpm,
-						accuracy,
-						correctChars: correctChars.current,
-						incorrectChars: incorrectChars.current,
-					}),
-				);
-				setStatsContent({
-					title: "High Score Smashed!",
-					description: "You're getting faster. That was incredible typing.",
-					buttonContent: "Go Again",
-				});
-			}
-		}
-		setStats((prev) => ({
-			...prev,
-			rawWpm: Math.round(keyStrokes.current / 5 / minutes),
-			wpm: Math.round(correctChars.current / 5 / minutes),
-			accuracy:
-				keyStrokes.current > 0
-					? Math.round((correctChars.current / keyStrokes.current) * 100)
-					: 0,
-		}));
-	};
-
-	useEffect(() => {
-		const handleKey = (e: KeyboardEvent) => {
-			keyStrokes.current++;
-
-			if (e.key === " ") {
-				e.preventDefault();
-			}
-
-			if (
-				started &&
-				computedTimeLeft.current > 0 &&
-				e.key.length === 1 &&
-				!e.ctrlKey &&
-				!e.metaKey &&
-				wordIndex < arrayWord.length
-			) {
-				setCursorIndex((prev) => prev + 1);
-				let newIndex = currentIndex;
-				let newWordIndex = wordIndex;
-
-				console.log("INDEXES: ", newIndex, newWordIndex);
-				if (newIndex >= arrayWord[newWordIndex].word.length) {
-					newIndex = 0;
-					newWordIndex = wordIndex + 1;
-
-					console.log("INDEX AFTER UPDATE: ", newIndex, newWordIndex);
-					setIndex(newIndex);
-					setWordIndex(newWordIndex);
-				}
-
-				if (newWordIndex < arrayWord.length) {
-					const temp = arrayWord;
-
-					temp[newWordIndex].typedAnswer[newIndex][1] = e.key;
-
-					if (e.key === temp[newWordIndex].typedAnswer[newIndex][0]) {
-						correctChars.current++;
-					} else {
-						incorrectChars.current++;
-					}
-
-					setArrayWord(temp);
-					setIndex((prev) => prev + 1);
-				}
-			}
-
-			if (e.key === "Backspace") {
-				console.log("Backspace");
-
-				if (cursorIndex !== 0) setCursorIndex((prev) => prev - 1);
-
-				let newIndex = currentIndex;
-				let newWordIndex = wordIndex;
-
-				if (newIndex - 1 < 0) {
-					if (newWordIndex - 1 >= 0) {
-						newWordIndex -= 1;
-
-						const temp = arrayWord;
-
-						newIndex = temp[newWordIndex].typedAnswer.length - 1;
-
-						const char = temp[newWordIndex].typedAnswer[newIndex][0];
-						const typedChar = temp[newWordIndex].typedAnswer[newIndex][1];
-
-						if (char === typedChar) correctChars.current--;
-						else incorrectChars.current--;
-
-						temp[newWordIndex].typedAnswer[newIndex][1] = undefined;
-
-						setArrayWord(temp);
-						setWordIndex(newWordIndex);
-						setIndex(newIndex);
-					}
-				} else {
-					const temp = arrayWord;
-
-					temp[newWordIndex].typedAnswer[newIndex - 1][1] = undefined;
-
-					newIndex -= 1;
-
-					setIndex(newIndex);
-					setArrayWord(temp);
-				}
-			}
-		};
-
-		document.addEventListener("keydown", handleKey);
-
-		return () => document.removeEventListener("keydown", handleKey);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [currentIndex, wordIndex, started, cursorIndex]);
-
-	useEffect(() => {
-		console.log("started");
-		if (!running) return;
-		console.log("here");
-
-		if (!startTime.current) {
-			startTime.current = Date.now();
-		}
-
-		const timeIntervalValue = options.mode === "timed" ? 100 : 1000;
-		let elapsedSeconds = (Date.now() - startTime.current!) / 1000;
-		let minutes = Math.max(elapsedSeconds / 50, 0.01);
-		computedTimeLeft.current =
-			options.mode === "timed" ? Math.max(-elapsedSeconds, 0) : 0;
-
-		timeInterval.current = setInterval(() => {
-			console.log("time runnng");
-			elapsedSeconds = (Date.now() - startTime.current!) / 1000;
-
-			if (options.mode === "timed") {
-				computedTimeLeft.current = Math.max(5 - elapsedSeconds, 0);
-
-				setDisplayTime({
-					minute: Math.floor(Math.ceil(computedTimeLeft.current) / 60),
-					seconds: Math.ceil(computedTimeLeft.current) % 60,
-				});
-			} else {
-				computedTimeLeft.current++;
-				setDisplayTime({
-					minute: Math.floor(Math.ceil(computedTimeLeft.current) / 60),
-					seconds: Math.ceil(computedTimeLeft.current) % 60,
-				});
-			}
-
-			minutes = Math.max(elapsedSeconds / 60, 0.01);
-
-			if (options.mode === "timed" && computedTimeLeft.current <= 0) {
-				startTime.current = null;
-
-				handleShowingStats(minutes);
-				if (timeInterval.current) clearInterval(timeInterval.current);
-				if (computeStatInterval.current)
-					clearInterval(computeStatInterval.current);
-
-				setRunning(false);
-			}
-		}, timeIntervalValue);
-
-		computeStatInterval.current = setInterval(() => {
-			if (running) {
-				setStats((prev) => ({
-					...prev,
-					rawWpm: Math.round(keyStrokes.current / 5 / minutes),
-					wpm: Math.round(correctChars.current / 5 / minutes),
-					accuracy:
-						keyStrokes.current > 0
-							? Math.round((correctChars.current / keyStrokes.current) * 100)
-							: 0,
-				}));
-			}
-		}, 1500);
-
-		return () => {
-			if (computeStatInterval.current)
-				clearInterval(computeStatInterval.current);
-
-			if (timeInterval.current) clearInterval(timeInterval.current);
-		};
-	}, [running, options.mode]);
+	const {
+		tracker,
+		showResultStat,
+		bestWpm,
+		stats,
+		displayTime,
+		statsContent,
+		handleStart,
+		handleRestart,
+		handleScoreBeat,
+		handleDifficulty,
+		handleMode,
+		options,
+		correctChars,
+		incorrectChars,
+		arrayWord,
+		sentence,
+		started,
+		cursorIndex,
+	} = useTypingTest();
 
 	return (
-		<main className="bg-[hsl(0,0%,7%)] min-h-dvh flex justify-center font-sora">
+		<main className="bg-[hsl(0,0%,7%)] min-h-dvh flex justify-center font-sora pt-4">
 			<div className="max-w-300 w-full">
 				{/* Header */}
-				<Header />
+				<Header bestWpm={bestWpm} />
 
 				{showResultStat ? (
 					<div className="max-w-300 flex flex-col justify-center items-center gap-5 relative">
@@ -488,7 +132,7 @@ export default function Page() {
 						</div>
 					</div>
 				) : (
-					<div>
+					<div className="mt-3">
 						<div className="xl:flex justify-between xl:items-center xl:px-4">
 							{/* Stats */}
 							<TypingStats
@@ -595,6 +239,8 @@ export default function Page() {
 							<div>
 								<div className="flex flex-wrap  text-2xl font-medium font-sora leading-15 xl:text-3xl">
 									{sentence.split(/(\s+)/).map((word, insideWordIndex) => {
+										// eslint-disable-next-line react-hooks/immutability
+										if (insideWordIndex === 0) tracker.current = 0;
 										return (
 											<span
 												key={insideWordIndex}
@@ -605,8 +251,9 @@ export default function Page() {
 											>
 												{Array.from(word).map((ch, index) => {
 													const chTyped =
-														arrayWord[insideWordIndex].typedAnswer[index][1];
-													tracker++;
+														arrayWord[insideWordIndex]?.typedAnswer[index]?.[1];
+													// eslint-disable-next-line react-hooks/immutability
+													tracker.current++;
 													return (
 														<span
 															className={cn(
@@ -617,7 +264,7 @@ export default function Page() {
 																		: chTyped !== ch
 																			? "text-red-500 border-b-3 border-b-red-500"
 																			: "",
-																tracker - 1 === cursorIndex &&
+																tracker.current - 1 === cursorIndex &&
 																	"bg-[hsl(240,1%,59%)] px-1 rounded-sm",
 																ch === " " &&
 																	ch !== chTyped &&
@@ -643,7 +290,7 @@ export default function Page() {
 
 				{started && !showResultStat && (
 					<button
-						onClick={handleRestart}
+						onClick={() => handleRestart()}
 						className="text-white font-sora font-semibold flex gap-2 bg-[hsl(0,0%,15%)] p-3 rounded-lg mx-auto mt-4 mb-8"
 					>
 						Restart Test
