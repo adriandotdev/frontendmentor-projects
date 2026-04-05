@@ -3,4 +3,6 @@
 @theme inline {
 	--font-roboto: var(--font-roboto);
 	--font-sora: var(--font-sora);
+	--font-barlow: var(--font-barlow);
+	--font-fraunces: var(--font-fraunces);
 }
