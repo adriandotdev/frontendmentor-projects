@@ -48,9 +48,22 @@ export default function AgencyLandingPage() {
 	};
 
 	useEffect(() => {
+		const handleResize = () => {
+			if (window.innerWidth >= 1280) {
+				setModalOpen(false);
+			}
+		};
+
+		window.addEventListener("resize", handleResize);
+
 		if (modalOpen) document.body.style.overflow = "hidden";
 		else document.body.style.overflow = "auto";
+
+		return () => {
+			window.removeEventListener("resize", handleResize);
+		};
 	}, [modalOpen]);
+
 	return (
 		<main onClick={handleBodyClick} className="text-[18px]">
 			<div className="bg-[url('/agencylandingpage/mobile/image-header.jpg')] bg-cover bg-center aspect-[375/538] relative xl:bg-[url('/agencylandingpage/desktop/image-header.jpg')] xl:aspect-[1440/800]">
