@@ -2,10 +2,13 @@
 /* eslint-disable jsx-a11y/alt-text */
 "use client";
 
+import { useEffect, useState } from "react";
 import { useFadeInOnScroll } from "../_hooks/useFadeInScroll";
 
 export default function AgencyLandingPage() {
 	const { ref: heroTitle, isVisible: isHeroTitleVisible } = useFadeInOnScroll();
+
+	const [modalOpen, setModalOpen] = useState(false);
 
 	const { ref: secondSection1, isVisible: isSecondSection1Visible } =
 		useFadeInOnScroll();
@@ -40,15 +43,30 @@ export default function AgencyLandingPage() {
 	const { ref: testimonial3, isVisible: isTestimonial3Visible } =
 		useFadeInOnScroll();
 
+	const handleBodyClick = () => {
+		setModalOpen(false);
+	};
+
+	useEffect(() => {
+		if (modalOpen) document.body.style.overflow = "hidden";
+		else document.body.style.overflow = "auto";
+	}, [modalOpen]);
 	return (
-		<main className="text-[18px]">
+		<main onClick={handleBodyClick} className="text-[18px]">
 			<div className="bg-[url('/agencylandingpage/mobile/image-header.jpg')] bg-cover bg-center aspect-[375/538] relative xl:bg-[url('/agencylandingpage/desktop/image-header.jpg')] xl:aspect-[1440/800]">
 				<div className="flex justify-between py-8 px-8 items-center xl:flex items-center">
 					<img src="/agencylandingpage/logo.svg" />
-					<img
-						className="xl:hidden"
-						src="/agencylandingpage/icon-hamburger.svg"
-					/>
+					<button
+						onClick={(e) => {
+							e.stopPropagation();
+							setModalOpen(true);
+						}}
+					>
+						<img
+							className="xl:hidden"
+							src="/agencylandingpage/icon-hamburger.svg"
+						/>
+					</button>
 					<div className="hidden xl:flex items-center gap-8">
 						<ul className="flex gap-8 font-barlow text-[hsl(0,100%,100%)]">
 							<li>About</li>
@@ -402,6 +420,24 @@ export default function AgencyLandingPage() {
 							fillRule="nonzero"
 						/>
 					</svg>
+				</div>
+			</div>
+
+			<div
+				className={`h-dvh fixed top-0 w-full px-8 pt-24 transition-all duration-300 ${modalOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+			>
+				<div
+					className={`transition-all duration-300 relative min-h-[250px] w-full bg-white p-8 flex flex-col items-center gap-8 ${modalOpen ? "translate-y-0" : "-translate-y-4"}`}
+				>
+					<div className="absolute -top-6 right-0 w-0 h-0 border-l-[24px] border-l-transparent border-b-[24px] border-b-white"></div>
+					<ul className="flex flex-col items-center gap-8 font-barlow text-[hsl(232,10%,55%)]">
+						<li>About</li>
+						<li>Services</li>
+						<li>Projects</li>
+					</ul>
+					<button className="uppercase font-fraunces font-bold bg-[hsl(51,100%,49%)] py-3 px-5 rounded-4xl cursor-pointer hover:bg-[hsl(198,62%,26%)]/10 text-[16px] hover:text-[hsl(0,100%,100%)]">
+						Contact
+					</button>
 				</div>
 			</div>
 		</main>
