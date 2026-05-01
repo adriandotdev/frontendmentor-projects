@@ -1,4 +1,11 @@
+import type { Metadata } from "next";
 import ProjectCard from "./components/ProjectCard";
+
+export const metadata: Metadata = {
+	title: "Frontend Mentor | Projects",
+	description: "A collection of frontend mentor projects",
+};
+
 const projects = [
 	{
 		projectName: "Easybank Landing Page",
