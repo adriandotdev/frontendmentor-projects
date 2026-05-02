@@ -123,6 +123,12 @@ const projects = [
 		repositoryLink: "https://github.com/adriandotdev/frontendmentor-projects",
 		imageSrc: "/projects-images/agencylandingpage.png",
 	},
+	{
+		projectName: "Bento Grid",
+		liveSiteLink: "/bentogrid",
+		repositoryLink: "https://github.com/adriandotdev/frontendmentor-projects",
+		imageSrc: "/projects-images/bento-grid.png",
+	},
 ];
 export default function Home() {
 	return (

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function Page() {
 	return (
-		<main className="px-4 py-8 flex flex-col gap-8 lg:grid lg:grid-cols-4 lg:max-w-[1280px] lg:mx-auto lg:grid-rows-3 lg:grid-rows-[300px_300px_300px] lg:gap-12- lg:h-dvh lg:place-content-center">
+		<main className="px-4 py-8 flex flex-col gap-8 lg:grid lg:grid-cols-4 lg:max-w-[1280px] lg:mx-auto lg:grid-rows-3 lg:grid-rows-[300px_300px_300px] lg:gap-12 lg:min-h-dvh lg:place-content-center">
 			<div className="bg-[hsl(256,67%,59%)] flex flex-col rounded-2xl items-center p-8 shadow-lg lg:col-start-2 lg:col-end-4 lg:justify-center">
 				<h1 className="flex flex-col items-center text-4xl lg:text-6xl lg:text-center lg:block">
 					<span className="text-white text-center font-dm-sans font-bold">
@@ -64,7 +64,7 @@ export default function Page() {
 				/>
 			</div>
 
-			<div className="flex flex-col items-center  gap-8 rounded-2xl px-8 py-8 shadow-lg relative overflow-hidden bg-[hsl(254,88%,90%)] lg:col-start-4 lg:row-start-1 lg:row-end-3">
+			<div className="flex flex-col items-center  gap-8 rounded-2xl px-8 py-8 shadow-lg relative overflow-hidden bg-[hsl(254,88%,90%)] lg:col-start-4 lg:row-start-1 lg:row-end-3 lg:gap-4 lg:py-12">
 				<p className="text-center text-3xl font-dm-sans font-semibold leading-8 lg:text-left z-10">
 					Schedule to social media.
 				</p>
@@ -74,7 +74,7 @@ export default function Page() {
 					width={0}
 					height={0}
 					sizes="100vw"
-					className="w-full h-auto z-10 lg:scale-[180%] lg:relative lg:top-20 lg:left-22"
+					className="w-full h-auto z-10 lg:scale-[180%] lg:relative lg:top-20 lg:left-21"
 					alt=""
 				/>
 
