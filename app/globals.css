@@ -1,5 +1,5 @@
 @import "tailwindcss";
-
+/* 
 * {
 	cursor: none !important;
 }
@@ -28,11 +28,12 @@
 		transform: translate(-50%, -50%) scale(1.8);
 		opacity: 0.4;
 	}
-}
+} */
 
 @theme inline {
 	--font-roboto: var(--font-roboto);
 	--font-sora: var(--font-sora);
 	--font-barlow: var(--font-barlow);
 	--font-fraunces: var(--font-fraunces);
+	--font-dm-sans: var(--font-dm-sans);
 }
