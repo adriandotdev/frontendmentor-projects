@@ -126,15 +126,23 @@ const projects = [
 ];
 export default function Home() {
 	return (
-		<main className="pb-6">
-			<div className="bg-white shadow-md py-3 mb-6">
-				<div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
-					<h1 className="text-xl font-bold">Frontend Mentor Projects</h1>
+		<main className="pb-6 bg-gray-950 min-h-screen">
+			<div className="bg-slate-900 shadow-md py-3 mb-6">
+				<div className="mx-auto max-w-7xl flex justify-between items-center  px-6 sm:px-8 lg:px-10">
+					<h1 className="text-xl font-bold text-white">
+						Frontend Mentor Projects
+					</h1>
+
+					<div className="font-bold">
+						<span className="text-white">Adrian</span>
+						<span className="text-yellow-700">.</span>
+						<span className="text-[#d2bea3]">Dev</span>
+					</div>
 				</div>
 			</div>
 
-			<div className="max-w-7xl mx-auto flex flex-col flex-wrap gap-5 sm:flex-row md:justify-center lg:justify-start px-6 sm:px-8 lg:px-12">
-				{projects.reverse().map((project, index) => (
+			<div className="max-w-7xl mx-auto flex flex-col flex-wrap gap-5 sm:flex-row md:justify-center lg:grid lg:grid-cols-3 px-6 sm:px-8">
+				{[...projects].reverse().map((project, index) => (
 					<ProjectCard
 						key={index}
 						projectName={project.projectName}

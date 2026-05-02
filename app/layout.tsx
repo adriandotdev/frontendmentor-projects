@@ -7,6 +7,7 @@ import {
 	Roboto,
 	Sora,
 } from "next/font/google";
+import CustomCursor from "./components/CustomCursor";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -53,6 +54,7 @@ export default function RootLayout({
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} ${roboto.variable} ${sora.variable} ${barlow.variable} ${fraunces.variable} antialiased`}
 			>
+				<CustomCursor />
 				{children}
 			</body>
 		</html>

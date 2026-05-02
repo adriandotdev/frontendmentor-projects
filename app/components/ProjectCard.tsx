@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 type ProjectCardProps = {
@@ -14,22 +15,29 @@ const ProjectCard = ({
 	imageSrc,
 }: ProjectCardProps) => {
 	return (
-		<div className="flex  flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-lg transition-shadow duration-300 min-w-[340px] max-w-[380px]">
+		<div className="flex flex-col overflow-hidden rounded-xl border border-gray-700 bg-gray-950 shadow-sm hover:shadow-lg min-w-[340px] max-w-[380px] group transition-all duration-300">
 			{/* Image */}
-			<div className="relative h-[200px] w-full">
-				<img src={imageSrc} alt={projectName} className="object-cover" />
+			<div className="relative h-50 w-full group-hover:scale-105 transition-transform duration-300">
+				<Image
+					src={imageSrc}
+					fill
+					sizes="(max-width: 768px) 100vw, 380px"
+					alt="Project preview image"
+					loading="eager"
+				/>
+				{/* <img src={imageSrc} alt={projectName} className="object-cover" /> */}
 			</div>
 
 			{/* Content */}
 			<div className="flex flex-col gap-4 p-5 flex-1">
-				<p className="text-lg font-bold text-orange-950">{projectName}</p>
+				<p className="text-lg font-bold text-white">{projectName}</p>
 
 				{/* Buttons */}
 				<div className="mt-auto flex gap-3">
 					<Link
 						href={liveSiteLink}
 						target="_blank"
-						className="flex-1 text-center bg-slate-950 text-white py-2 rounded-lg text-sm font-bold hover:bg-slate-800 transition"
+						className="flex-1 text-center bg-[#d2bea3] text-slate-950 py-2 rounded-lg text-sm font-bold transition hover:bg-slate-800 hover:text-white"
 					>
 						Live Site
 					</Link>
@@ -37,7 +45,7 @@ const ProjectCard = ({
 					<Link
 						href={repositoryLink}
 						target="_blank"
-						className="flex-1 text-center border border-slate-900 text-slate-900 py-2 rounded-lg text-sm font-bold hover:bg-slate-900 hover:text-white transition"
+						className="flex-1 text-center border border-gray-500 text-gray-300 py-2 rounded-lg text-sm font-bold hover:bg-gray-600 hover:text-white transition"
 					>
 						Code
 					</Link>
